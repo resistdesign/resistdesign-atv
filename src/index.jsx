@@ -1,5 +1,5 @@
 /**
- * https://resistdesign.github.io/resistdesign-atp/
+ * https://resistdesign.github.io/resistdesign-atp
  * */
 import AsynchronousTypeProcessor from 'resistdesign-atp';
 
