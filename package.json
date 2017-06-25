@@ -1,7 +1,7 @@
 {
   "name": "resistdesign-atv",
   "version": "0.0.0",
-  "description": "",
+  "description": "A Generic, Asynchronous Type Validator",
   "main": "src/index.jsx",
   "scripts": {
     "test": "mocha --require resistdesign-babel-register --ui exports **/*.spec.jsx",

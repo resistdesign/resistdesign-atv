@@ -1,9 +1,11 @@
+/**
+ * https://resistdesign.github.io/resistdesign-atp/
+ * */
 import AsynchronousTypeProcessor from 'resistdesign-atp';
 
 /**
+ * @class AsynchronousTypeValidator
  * Validate data of a given type contained within the type map.
- * @extends AsynchronousTypeProcessor
- * https://resistdesign.github.io/resistdesign-atp/
  * */
 export default class AsynchronousTypeValidator
   extends AsynchronousTypeProcessor {
