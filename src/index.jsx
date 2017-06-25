@@ -5,15 +5,23 @@ export default class AsynchronousTypeValidator
   static ERROR_MESSAGES = {
     MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD'
   };
+  static FEATURE_NAME = 'validation';
+  static INVALID_REQUIRED_VALUES = [null, undefined];
 
+  /**
+   * @override
+   * */
   async processValue (value, typeName, fieldName) {
-    const fieldDescriptor = this.getFieldDescriptor(typeName, fieldName);
+    const validationFeature = await this.getFieldFeature(
+        typeName,
+        fieldName,
+        AsynchronousTypeValidator.FEATURE_NAME
+      ) || {};
+    const { required } = validationFeature;
 
     if (
-      fieldDescriptor.features instanceof Object &&
-      fieldDescriptor.features.valdation instanceof Object &&
-      fieldDescriptor.features.validation.required &&
-      (value === null || value === undefined)
+      required &&
+      AsynchronousTypeValidator.INVALID_REQUIRED_VALUES.indexOf(value) !== -1
     ) {
       throw new Error(
         AsynchronousTypeValidator.ERROR_MESSAGES.MISSING_REQUIRED_FIELD
