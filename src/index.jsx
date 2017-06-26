@@ -14,6 +14,18 @@ export default class AsynchronousTypeValidator
   };
   static FEATURE_NAME = 'validation';
   static INVALID_REQUIRED_VALUES = [null, undefined];
+  static FEATURE_VALIDATORS = {
+    required: async (config, value, typeName, fieldName) => {
+      if (
+        config &&
+        AsynchronousTypeValidator.INVALID_REQUIRED_VALUES.indexOf(value) !== -1
+      ) {
+        throw new Error(
+          AsynchronousTypeValidator.ERROR_MESSAGES.MISSING_REQUIRED_FIELD
+        );
+      }
+    }
+  };
 
   /**
    * @override
@@ -24,15 +36,18 @@ export default class AsynchronousTypeValidator
         fieldName,
         AsynchronousTypeValidator.FEATURE_NAME
       ) || {};
-    const { required } = validationFeature;
 
-    if (
-      required &&
-      AsynchronousTypeValidator.INVALID_REQUIRED_VALUES.indexOf(value) !== -1
-    ) {
-      throw new Error(
-        AsynchronousTypeValidator.ERROR_MESSAGES.MISSING_REQUIRED_FIELD
-      );
+    for (const k in AsynchronousTypeValidator.FEATURE_VALIDATORS) {
+      if (AsynchronousTypeValidator.FEATURE_VALIDATORS.hasOwnProperty(k)) {
+        const featureValidator = AsynchronousTypeValidator.FEATURE_VALIDATORS[k];
+
+        await featureValidator(
+          validationFeature[k],
+          value,
+          typeName,
+          fieldName
+        );
+      }
     }
 
     return super.processValue(value, typeName, fieldName);
