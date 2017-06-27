@@ -63,7 +63,7 @@ export default class AsynchronousTypeValidator
   }
 
   /**
-   * Validate a primitive value for the field of a given type.
+   * Validate a primitive value for the given field of a given type.
    * @param {*} value The value to be validated.
    * @param {string} typeName The name of the type.
    * @param {string} fieldName The name of the field.
