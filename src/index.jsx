@@ -108,7 +108,33 @@ export default class AsynchronousTypeValidator
    * @param {string} typeName The name of the type.
    * */
   async validateItem (item, typeName) {
+    if (this.itemValidatorMap instanceof Object) {
+      const typeDefinition = await this.getTypeDefinition(typeName) || {};
+      const { itemValidators } = typeDefinition;
 
+      if (itemValidators instanceof Array) {
+        const validationError = AsynchronousTypeValidator.createValidationError(
+          AsynchronousTypeValidator.ERROR_TYPES.INVALID_ITEM
+        );
+
+        for (let i = 0; i < itemValidators.length; i++) {
+          const validatorName = itemValidators[i];
+          const validator = this.itemValidatorMap[validatorName];
+
+          if (validator instanceof Function) {
+            try {
+              await validator(item, typeName, itemValidators);
+            } catch (error) {
+              validationError.reasons[validatorName] = error;
+            }
+          }
+        }
+
+        if (AsynchronousTypeValidator.shouldThrowError(validationError)) {
+          throw validationError;
+        }
+      }
+    }
   }
 
   /**
@@ -139,5 +165,15 @@ export default class AsynchronousTypeValidator
     await this.validateValue(value, typeName, fieldName);
 
     return super.processValue(value, typeName, fieldName);
+  }
+
+  /**
+   * @override
+   * */
+  async processItem (item, typeName) {
+    // Mapped item validators.
+    await this.validateItem(item, typeName);
+
+    return super.processItem(item, typeName);
   }
 }
