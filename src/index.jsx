@@ -4,6 +4,30 @@
 import AsynchronousTypeProcessor from 'resistdesign-atp';
 
 /**
+ * @function
+ * @param {*} value The value to be validated.
+ * @param {string} typeName The name of the type.
+ * @param {string} fieldName The name of the field.
+ * @param {Array.<string>} valueValidators The array of validator function names
+ * from the validation feature configuration on a field descriptor.
+ * @throws {*} An error structure when the value is invalid.
+ * */
+function ValueValidationFunction (value, typeName, fieldName, valueValidators) {
+}
+
+/**
+ * @function
+ * @param {Object} item The item to validate.
+ * @param {string} typeName The name of the type.
+ * @param {Array.<string>} itemValidators The array of validator function names
+ * from the type definition.
+ * @throws {*} An error structure when the item is invalid.
+ * */
+function ItemValidationFunction (item, typeName, itemValidators) {
+
+}
+
+/**
  * @class AsynchronousTypeValidator
  * Validate data of a given type contained within the type map.
  * */
@@ -44,18 +68,21 @@ export default class AsynchronousTypeValidator
   }
 
   static shouldThrowError (error) {
-    if (
-      error instanceof Error &&
+    return error instanceof Error &&
       error.reasons instanceof Object &&
-      Object.keys(error.reasons).length
-    ) {
-      return true;
-    } else {
-      return false;
-    }
+      Object.keys(error.reasons).length;
   }
 
+  /**
+   * A map of value validation functions.
+   * @member {Object.<string, ValueValidationFunction>}
+   * */
   valueValidatorMap;
+
+  /**
+   * A map of item validation functions.
+   * @member {Object.<string, ItemValidationFunction>}
+   * */
   itemValidatorMap;
 
   constructor (config) {
