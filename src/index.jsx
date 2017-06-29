@@ -35,7 +35,10 @@ export default class AsynchronousTypeValidator
   extends AsynchronousTypeProcessor {
   static ERROR_MESSAGES = {
     VALIDATION_ERROR: 'VALIDATION_ERROR',
-    MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD'
+    MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
+    INCORRECT_NUMBER_OF_ITEMS: 'INCORRECT_NUMBER_OF_ITEMS',
+    LESS_THAN_MINIMUM_NUMBER_OF_ITEMS: 'LESS_THAN_MINIMUM_NUMBER_OF_ITEMS',
+    GREATER_THAN_MAXIMUM_NUMBER_OF_ITEMS: 'GREATER_THAN_MAXIMUM_NUMBER_OF_ITEMS'
   };
   static ERROR_TYPES = {
     INVALID_VALUE: 'INVALID_VALUE',
@@ -53,6 +56,54 @@ export default class AsynchronousTypeValidator
         throw new Error(
           AsynchronousTypeValidator.ERROR_MESSAGES.MISSING_REQUIRED_FIELD
         );
+      }
+    },
+    requiredLength: async (config, value, typeName, fieldName) => {
+      if (
+        typeof config === 'number' &&
+        (
+          !(value instanceof Array) ||
+          value.length !== config
+        )
+      ) {
+        const error = new Error(
+          AsynchronousTypeValidator.ERROR_MESSAGES.INCORRECT_NUMBER_OF_ITEMS
+        );
+        error.data = config;
+
+        throw error;
+      }
+    },
+    requiredLengthAtLeast: async (config, value, typeName, fieldName) => {
+      if (
+        typeof config === 'number' &&
+        (
+          !(value instanceof Array) ||
+          value.length < config
+        )
+      ) {
+        const error = new Error(
+          AsynchronousTypeValidator
+            .ERROR_MESSAGES.LESS_THAN_MINIMUM_NUMBER_OF_ITEMS
+        );
+        error.data = config;
+
+        throw error;
+      }
+    },
+    requiredLengthAtMost: async (config, value, typeName, fieldName) => {
+      if (
+        typeof config === 'number' &&
+        value instanceof Array &&
+        value.length > config
+      ) {
+        const error = new Error(
+          AsynchronousTypeValidator
+            .ERROR_MESSAGES.GREATER_THAN_MAXIMUM_NUMBER_OF_ITEMS
+        );
+        error.data = config;
+
+        throw error;
       }
     }
   };
