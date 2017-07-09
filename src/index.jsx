@@ -1,30 +1,29 @@
 /**
  * https://resistdesign.github.io/resistdesign-atp
  * */
-import AsynchronousTypeProcessor from 'resistdesign-atp';
+import AbstractTypeProcessor from 'resistdesign-atp';
 
 /**
  * @function
- * @param {*} value The value to be validated.
+ * @param {Object} value The value to be validated.
+ * @param {Array.<string>} typeValidationConfig The validation feature
+ * configuration for the type.
  * @param {string} typeName The name of the type.
- * @param {string} fieldName The name of the field.
- * @param {Array.<string>} valueValidators The array of validator function names
- * from the validation feature configuration on a field descriptor.
- * @throws {*} An error structure when the value is invalid.
+ * @throws {*} An error structure when the item is invalid.
  * */
-function ValueValidationFunction (value, typeName, fieldName, valueValidators) {
+function TypeValidationFunction (value, typeValidationConfig, typeName) {
 }
 
 /**
  * @function
- * @param {Object} item The item to validate.
+ * @param {string} value The value to be validated.
+ * @param {Array.<string>} config The configuration value for the specific
+ * validation feature property.
  * @param {string} typeName The name of the type.
- * @param {Array.<string>} itemValidators The array of validator function names
- * from the type definition.
- * @throws {*} An error structure when the item is invalid.
+ * @param {string} fieldName The name of the field.
+ * @throws {*} An error structure when the value is invalid.
  * */
-function ItemValidationFunction (item, typeName, itemValidators) {
-
+function FieldValidationFunction (value, config, typeName, fieldName) {
 }
 
 /**
@@ -32,33 +31,28 @@ function ItemValidationFunction (item, typeName, itemValidators) {
  * Validate data of a given type contained within the type map.
  * */
 export default class AsynchronousTypeValidator
-  extends AsynchronousTypeProcessor {
+  extends AbstractTypeProcessor {
   static ERROR_MESSAGES = {
     VALIDATION_ERROR: 'VALIDATION_ERROR',
     MISSING_REQUIRED_FIELD: 'MISSING_REQUIRED_FIELD',
-    INCORRECT_NUMBER_OF_ITEMS: 'INCORRECT_NUMBER_OF_ITEMS',
-    LESS_THAN_MINIMUM_NUMBER_OF_ITEMS: 'LESS_THAN_MINIMUM_NUMBER_OF_ITEMS',
-    GREATER_THAN_MAXIMUM_NUMBER_OF_ITEMS: 'GREATER_THAN_MAXIMUM_NUMBER_OF_ITEMS'
-  };
-  static ERROR_TYPES = {
-    INVALID_VALUE: 'INVALID_VALUE',
-    INVALID_ITEM: 'INVALID_ITEM',
-    INVALID_ITEM_LIST: 'INVALID_ITEM_LIST',
+    INCORRECT_NUMBER_OF_VALUES: 'INCORRECT_NUMBER_OF_VALUES',
+    LESS_THAN_MINIMUM_NUMBER_OF_VALUES: 'LESS_THAN_MINIMUM_NUMBER_OF_VALUES',
+    GREATER_THAN_MAXIMUM_NUMBER_OF_VALUES: 'GREATER_THAN_MAXIMUM_NUMBER_OF_VALUES'
   };
   static FEATURE_NAME = 'validation';
   static INVALID_REQUIRED_VALUES = [null, undefined];
-  static FEATURE_VALIDATORS = {
-    required: async (config, value, typeName, fieldName) => {
+  static DEFAULT_FIELD_FEATURE_VALIDATOR_MAP = {
+    required: async (value, config) => {
       if (
         config &&
         AsynchronousTypeValidator.INVALID_REQUIRED_VALUES.indexOf(value) !== -1
       ) {
-        throw new Error(
+        throw new TypeError(
           AsynchronousTypeValidator.ERROR_MESSAGES.MISSING_REQUIRED_FIELD
         );
       }
     },
-    requiredLength: async (config, value, typeName, fieldName) => {
+    requiredLength: async (value, config) => {
       if (
         typeof config === 'number' &&
         (
@@ -66,15 +60,15 @@ export default class AsynchronousTypeValidator
           value.length !== config
         )
       ) {
-        const error = new Error(
-          AsynchronousTypeValidator.ERROR_MESSAGES.INCORRECT_NUMBER_OF_ITEMS
+        const error = new TypeError(
+          AsynchronousTypeValidator.ERROR_MESSAGES.INCORRECT_NUMBER_OF_VALUES
         );
         error.data = config;
 
         throw error;
       }
     },
-    requiredLengthAtLeast: async (config, value, typeName, fieldName) => {
+    requiredLengthMin: async (value, config) => {
       if (
         typeof config === 'number' &&
         (
@@ -82,24 +76,24 @@ export default class AsynchronousTypeValidator
           value.length < config
         )
       ) {
-        const error = new Error(
+        const error = new TypeError(
           AsynchronousTypeValidator
-            .ERROR_MESSAGES.LESS_THAN_MINIMUM_NUMBER_OF_ITEMS
+            .ERROR_MESSAGES.LESS_THAN_MINIMUM_NUMBER_OF_VALUES
         );
         error.data = config;
 
         throw error;
       }
     },
-    requiredLengthAtMost: async (config, value, typeName, fieldName) => {
+    requiredLengthMax: async (value, config) => {
       if (
         typeof config === 'number' &&
         value instanceof Array &&
         value.length > config
       ) {
-        const error = new Error(
+        const error = new TypeError(
           AsynchronousTypeValidator
-            .ERROR_MESSAGES.GREATER_THAN_MAXIMUM_NUMBER_OF_ITEMS
+            .ERROR_MESSAGES.GREATER_THAN_MAXIMUM_NUMBER_OF_VALUES
         );
         error.data = config;
 
@@ -108,150 +102,82 @@ export default class AsynchronousTypeValidator
     }
   };
 
-  static createValidationError (type) {
-    const validationError = new Error(
-      AsynchronousTypeValidator.ERROR_MESSAGES.VALIDATION_ERROR
-    );
-    validationError.type = type;
-    validationError.reasons = {};
-
-    return validationError;
-  }
-
-  static shouldThrowError (error) {
-    return error instanceof Error &&
-      error.reasons instanceof Object &&
-      Object.keys(error.reasons).length;
-  }
+  /**
+   * A map of item validation functions.
+   * @member {Object.<string, TypeValidationFunction>}
+   * */
+  typeValidatorMap;
 
   /**
    * A map of value validation functions.
-   * @member {Object.<string, ValueValidationFunction>}
+   * @member {Object.<string, FieldValidationFunction>}
    * */
-  valueValidatorMap;
-
-  /**
-   * A map of item validation functions.
-   * @member {Object.<string, ItemValidationFunction>}
-   * */
-  itemValidatorMap;
+  fieldFeatureValidatorMap;
 
   constructor (config) {
     super(config);
+
+    // Set the default `fieldFeatureValidatorMap` if one is not set.
+    this.fieldFeatureValidatorMap =
+      this.fieldFeatureValidatorMap instanceof Object ?
+        this.fieldFeatureValidatorMap :
+        AsynchronousTypeValidator.DEFAULT_FIELD_FEATURE_VALIDATOR_MAP;
+  }
+
+  async processValue (value, typeName) {
+    if (
+      AsynchronousTypeValidator.valueExists(value) &&
+      this.typeValidatorMap instanceof Object
+    ) {
+      // Type level validation
+      const typeValidator = this.typeValidatorMap[typeName];
+
+      if (typeValidator instanceof Function) {
+        const typeValidationFeatureConfig = await this.getTypeFeature(
+          typeName,
+          AsynchronousTypeValidator.FEATURE_NAME
+        );
+
+        typeValidator(value, typeValidationFeatureConfig, typeName);
+      }
+    }
+
+    return super.processValue(value, typeName);
   }
 
   /**
-   * Validate a primitive value for the given field of a given type.
-   * @param {*} value The value to be validated.
-   * @param {string} typeName The name of the type.
-   * @param {string} fieldName The name of the field.
+   * @override
    * */
-  async validateValue (value, typeName, fieldName) {
-    if (this.valueValidatorMap instanceof Object) {
-      const validationFeature = await this.getFieldFeature(
+  async processFieldValue (value, typeName, fieldName) {
+    if (this.fieldFeatureValidatorMap instanceof Object) {
+      // Field level feature validations.
+      const fieldValidationFeatureConfig = await this.getFieldFeature(
           typeName,
           fieldName,
           AsynchronousTypeValidator.FEATURE_NAME
         ) || {};
-      const { valueValidators } = validationFeature;
 
-      if (valueValidators instanceof Array) {
-        const validationError = AsynchronousTypeValidator.createValidationError(
-          AsynchronousTypeValidator.ERROR_TYPES.INVALID_VALUE
-        );
+      for (const k in fieldValidationFeatureConfig) {
+        if (
+          fieldValidationFeatureConfig.hasOwnProperty(k) &&
+          this.fieldFeatureValidatorMap.hasOwnProperty(k)
+        ) {
+          const fieldFeatureValidator = this.fieldFeatureValidatorMap[k];
 
-        for (let i = 0; i < valueValidators.length; i++) {
-          const validatorName = valueValidators[i];
-          const validator = this.valueValidatorMap[validatorName];
+          if (fieldFeatureValidator instanceof Function) {
+            const featurePropertyConfig = fieldValidationFeatureConfig[k];
 
-          if (validator instanceof Function) {
-            try {
-              await validator(value, typeName, fieldName, valueValidators);
-            } catch (error) {
-              validationError.reasons[validatorName] = error;
-            }
+            await fieldFeatureValidator(
+              value,
+              featurePropertyConfig,
+              typeName,
+              fieldName
+            );
           }
         }
-
-        if (AsynchronousTypeValidator.shouldThrowError(validationError)) {
-          throw validationError;
-        }
-      }
-    }
-  }
-
-  /**
-   * Validate an item of a given type.
-   * @param {Object} item The item to validate.
-   * @param {string} typeName The name of the type.
-   * */
-  async validateItem (item, typeName) {
-    if (this.itemValidatorMap instanceof Object) {
-      const typeDefinition = await this.getTypeDefinition(typeName) || {};
-      const { itemValidators } = typeDefinition;
-
-      if (itemValidators instanceof Array) {
-        const validationError = AsynchronousTypeValidator.createValidationError(
-          AsynchronousTypeValidator.ERROR_TYPES.INVALID_ITEM
-        );
-
-        for (let i = 0; i < itemValidators.length; i++) {
-          const validatorName = itemValidators[i];
-          const validator = this.itemValidatorMap[validatorName];
-
-          if (validator instanceof Function) {
-            try {
-              await validator(item, typeName, itemValidators);
-            } catch (error) {
-              validationError.reasons[validatorName] = error;
-            }
-          }
-        }
-
-        if (AsynchronousTypeValidator.shouldThrowError(validationError)) {
-          throw validationError;
-        }
-      }
-    }
-  }
-
-  /**
-   * @override
-   * */
-  async processValue (value, typeName, fieldName) {
-    const validationFeature = await this.getFieldFeature(
-        typeName,
-        fieldName,
-        AsynchronousTypeValidator.FEATURE_NAME
-      ) || {};
-
-    // Field level feature validations.
-    for (const k in AsynchronousTypeValidator.FEATURE_VALIDATORS) {
-      if (AsynchronousTypeValidator.FEATURE_VALIDATORS.hasOwnProperty(k)) {
-        const featureValidator = AsynchronousTypeValidator.FEATURE_VALIDATORS[k];
-
-        await featureValidator(
-          validationFeature[k],
-          value,
-          typeName,
-          fieldName
-        );
       }
     }
 
-    // Mapped value validators.
-    await this.validateValue(value, typeName, fieldName);
-
-    return super.processValue(value, typeName, fieldName);
-  }
-
-  /**
-   * @override
-   * */
-  async processItem (item, typeName) {
-    // Mapped item validators.
-    await this.validateItem(item, typeName);
-
-    return super.processItem(item, typeName);
+    return super.processFieldValue(value, typeName, fieldName);
   }
 }
