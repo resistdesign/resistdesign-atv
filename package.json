@@ -1,6 +1,6 @@
 {
   "name": "resistdesign-atv",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "A Generic, Asynchronous Type Validator",
   "main": "src/index.jsx",
   "scripts": {
