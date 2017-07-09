@@ -11,7 +11,7 @@ import AbstractTypeProcessor from 'resistdesign-atp';
  * @param {string} typeName The name of the type.
  * @throws {*} An error structure when the item is invalid.
  * */
-function TypeValidationFunction (value, typeValidationConfig, typeName) {
+async function TypeValidationFunction (value, typeValidationConfig, typeName) {
 }
 
 /**
@@ -23,7 +23,7 @@ function TypeValidationFunction (value, typeValidationConfig, typeName) {
  * @param {string} fieldName The name of the field.
  * @throws {*} An error structure when the value is invalid.
  * */
-function FieldValidationFunction (value, config, typeName, fieldName) {
+async function FieldValidationFunction (value, config, typeName, fieldName) {
 }
 
 /**
@@ -141,7 +141,7 @@ export default class AsynchronousTypeValidator
           AsynchronousTypeValidator.FEATURE_NAME
         );
 
-        typeValidator(value, typeValidationFeatureConfig, typeName);
+        await typeValidator(value, typeValidationFeatureConfig, typeName);
       }
     }
 
