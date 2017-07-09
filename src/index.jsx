@@ -124,6 +124,9 @@ export default class AsynchronousTypeValidator
         AsynchronousTypeValidator.DEFAULT_FIELD_FEATURE_VALIDATOR_MAP;
   }
 
+  /**
+   * @override
+   * */
   async processValue (value, typeName) {
     if (
       AsynchronousTypeValidator.valueExists(value) &&
