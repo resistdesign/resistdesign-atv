@@ -10,7 +10,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "resistdesign-atp": "^3.0.1"
+    "resistdesign-atp": "^4.0.3"
   },
   "devDependencies": {
     "babel-plugin-transform-class-properties": "^6.24.1",

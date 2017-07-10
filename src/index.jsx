@@ -127,7 +127,9 @@ export default class AsynchronousTypeValidator
   /**
    * @override
    * */
-  async processValue (value, typeName) {
+  async processValue (input) {
+    const { value, typeName } = input;
+
     if (
       AsynchronousTypeValidator.valueExists(value) &&
       this.typeValidatorMap instanceof Object
@@ -145,13 +147,15 @@ export default class AsynchronousTypeValidator
       }
     }
 
-    return super.processValue(value, typeName);
+    return super.processValue(input);
   }
 
   /**
    * @override
    * */
-  async processFieldValue (value, typeName, fieldName) {
+  async processFieldValue (input) {
+    const { value, typeName, fieldName } = input;
+
     if (this.fieldFeatureValidatorMap instanceof Object) {
       // Field level feature validations.
       const fieldValidationFeatureConfig = await this.getFieldFeature(
@@ -181,6 +185,6 @@ export default class AsynchronousTypeValidator
       }
     }
 
-    return super.processFieldValue(value, typeName, fieldName);
+    return super.processFieldValue(input);
   }
 }
