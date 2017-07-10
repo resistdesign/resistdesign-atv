@@ -21,9 +21,16 @@ async function TypeValidationFunction (value, typeValidationConfig, typeName) {
  * validation feature property.
  * @param {string} typeName The name of the type.
  * @param {string} fieldName The name of the field.
+ * @param {string} fieldTypeName The name of the type of the field.
+ * @param {Object} parentItem The item containing the field value.
  * @throws {*} An error structure when the value is invalid.
  * */
-async function FieldValidationFunction (value, config, typeName, fieldName) {
+async function FieldValidationFunction (value,
+                                        config,
+                                        typeName,
+                                        fieldName,
+                                        fieldTypeName,
+                                        parentItem) {
 }
 
 /**
@@ -147,14 +154,14 @@ export default class AsynchronousTypeValidator
       }
     }
 
-    return super.processValue(input);
+    return await super.processValue(input);
   }
 
   /**
    * @override
    * */
   async processFieldValue (input) {
-    const { value, typeName, fieldName } = input;
+    const { item, value, typeName, fieldName } = input;
 
     if (this.fieldFeatureValidatorMap instanceof Object) {
       // Field level feature validations.
@@ -163,6 +170,11 @@ export default class AsynchronousTypeValidator
           fieldName,
           AsynchronousTypeValidator.FEATURE_NAME
         ) || {};
+      const fieldDescriptor = await this.getFieldDescriptor(
+        typeName,
+        fieldName
+      );
+      const { type: fieldTypeName } = fieldDescriptor;
 
       for (const k in fieldValidationFeatureConfig) {
         if (
@@ -178,13 +190,15 @@ export default class AsynchronousTypeValidator
               value,
               featurePropertyConfig,
               typeName,
-              fieldName
+              fieldName,
+              fieldTypeName,
+              item
             );
           }
         }
       }
     }
 
-    return super.processFieldValue(input);
+    return await super.processFieldValue(input);
   }
 }
