@@ -60,7 +60,10 @@ module.exports = {
         let typeError;
 
         try {
-          await atv.processValue(MOCK_CONTACT_2, 'Contact');
+          await atv.processValue({
+            value: MOCK_CONTACT_2,
+            typeName: 'Contact'
+          });
         } catch (error) {
           typeError = error;
         }
@@ -85,11 +88,11 @@ module.exports = {
         let requiredError;
 
         try {
-          await atv.processFieldValue(
-            MOCK_CONTACT.firstName,
-            'Contact',
-            'firstName'
-          );
+          await atv.processFieldValue({
+            value: MOCK_CONTACT.firstName,
+            typeName: 'Contact',
+            fieldName: 'firstName'
+          });
         } catch (error) {
           requiredError = error;
         }
